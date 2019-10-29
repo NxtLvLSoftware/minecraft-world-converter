@@ -19,10 +19,10 @@ $ convert mcregion:anvil /full/path/to/your/world
 All you have to do to install with composer is the following:
 
 ```bash
-$ composer global require nxtlvlsoftware/enums
+$ composer global require nxtlvlsoftware/minecraft-world-converter
 ```
 
-You can also download directly from the releases and execute the phar file directly or add it to your path.
+You can also download a packaged phar executable from the releases run it directly or add it to your path.
 
 ### Under the hood
 
