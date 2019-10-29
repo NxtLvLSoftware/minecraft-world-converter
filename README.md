@@ -11,7 +11,7 @@ can only convert from McRegion to Anvil. In the future we plan to add support fo
 
 Here's a quick example:
 ```php
-$ converter mcregion:anvil /full/path/to/your/world
+$ convert mcregion:anvil /full/path/to/your/world
 ```
 
 ### Installation
