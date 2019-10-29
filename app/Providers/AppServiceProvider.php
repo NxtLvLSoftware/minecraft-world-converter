@@ -40,22 +40,22 @@ use pocketmine\level\generator\GeneratorManager;
 
 class AppServiceProvider extends ServiceProvider{
 
-    /**
-     * Bootstrap any application services.
-     *
-     * @return void
-     */
-    public function boot(){
-        GeneratorManager::registerDefaultGenerators();
-    }
+	/**
+	 * Bootstrap any application services.
+	 *
+	 * @return void
+	 */
+	public function boot(){
+		GeneratorManager::registerDefaultGenerators();
+	}
 
-    /**
-     * Register any application services.
-     *
-     * @return void
-     */
-    public function register(){
-        //
-    }
+	/**
+	 * Register any application services.
+	 *
+	 * @return void
+	 */
+	public function register(){
+		//
+	}
 
 }

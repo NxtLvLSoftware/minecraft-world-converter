@@ -39,18 +39,19 @@ use pocketmine\level\format\io\region\RegionLoader;
 
 final class RegionLoaderUtils extends RegionLoader{
 
-    public function __construct(string $filePath, int $regionX, int $regionZ){
-        // NOOP
-    }
+	public function __construct(string $filePath, int $regionX, int $regionZ){
+		// NOOP
+	}
 
-    public static function calculateChunkCount(RegionLoader $region) : int{
-        $count = 0;
-        for($i = 0; $i < 1024; ++$i){
-            if($region->isChunkGenerated($i)){
-                $count++;
-            }
-        }
-        return $count;
-    }
+	public static function calculateChunkCount(RegionLoader $region) : int{
+		$count = 0;
+		for($i = 0; $i < 1024; ++$i){
+			if($region->isChunkGenerated($i)){
+				$count++;
+			}
+		}
+
+		return $count;
+	}
 
 }

@@ -37,26 +37,26 @@ namespace App\Utils;
 
 final class Filesystem{
 
-    private function __construct(){
-        //NOOP
-    }
+	private function __construct(){
+		//NOOP
+	}
 
-    public static function recursiveUnlink(string $dir) : void{
-        if(is_dir($dir)){
-            $objects = scandir($dir, SCANDIR_SORT_NONE);
-            foreach($objects as $object){
-                if($object !== "." and $object !== ".."){
-                    if(is_dir($dir . "/" . $object)){
-                        self::recursiveUnlink($dir . "/" . $object);
-                    }else{
-                        unlink($dir . "/" . $object);
-                    }
-                }
-            }
-            rmdir($dir);
-        }elseif(is_file($dir)){
-            unlink($dir);
-        }
-    }
+	public static function recursiveUnlink(string $dir) : void{
+		if(is_dir($dir)){
+			$objects = scandir($dir, SCANDIR_SORT_NONE);
+			foreach($objects as $object){
+				if($object !== "." and $object !== ".."){
+					if(is_dir($dir . "/" . $object)){
+						self::recursiveUnlink($dir . "/" . $object);
+					}else{
+						unlink($dir . "/" . $object);
+					}
+				}
+			}
+			rmdir($dir);
+		}elseif(is_file($dir)){
+			unlink($dir);
+		}
+	}
 
 }

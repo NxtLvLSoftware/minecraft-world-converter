@@ -45,112 +45,112 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class FormatConverter{
 
-    /** @var LevelProvider */
-    private $oldProvider;
+	/** @var LevelProvider */
+	private $oldProvider;
 
-    /** @var LevelProvider|string */
-    private $newProvider;
+	/** @var LevelProvider|string */
+	private $newProvider;
 
-    /** @var string */
-    private $backupPath;
+	/** @var string */
+	private $backupPath;
 
-    /** @var OutputInterface */
-    private $output;
+	/** @var OutputInterface */
+	private $output;
 
-    public function __construct(LevelProvider $oldProvider, string $newProvider, string $backupPath, OutputInterface $output){
-        $this->oldProvider = $oldProvider;
-        Utils::testValidInstance($newProvider, LevelProvider::class);
-        $this->newProvider = $newProvider;
-        $this->output = $output;
+	public function __construct(LevelProvider $oldProvider, string $newProvider, string $backupPath, OutputInterface $output){
+		$this->oldProvider = $oldProvider;
+		Utils::testValidInstance($newProvider, LevelProvider::class);
+		$this->newProvider = $newProvider;
+		$this->output = $output;
 
-        if(!file_exists($backupPath)){
-            @mkdir($backupPath, 0777, true);
-        }
-        $nextSuffix = "";
-        do{
-            $this->backupPath = $backupPath . DIRECTORY_SEPARATOR . basename($this->oldProvider->getPath()) . $nextSuffix;
-            $nextSuffix = "_" . crc32(random_bytes(4));
-        }while(file_exists($this->backupPath));
-    }
+		if(!file_exists($backupPath)){
+			@mkdir($backupPath, 0777, true);
+		}
+		$nextSuffix = "";
+		do{
+			$this->backupPath = $backupPath . DIRECTORY_SEPARATOR . basename($this->oldProvider->getPath()) . $nextSuffix;
+			$nextSuffix = "_" . crc32(random_bytes(4));
+		}while(file_exists($this->backupPath));
+	}
 
-    public function getBackupPath() : string{
-        return $this->backupPath;
-    }
+	public function getBackupPath() : string{
+		return $this->backupPath;
+	}
 
-    public function execute() : LevelProvider{
-        $new = $this->generateNew();
+	public function execute() : LevelProvider{
+		$new = $this->generateNew();
 
-        $this->populateLevelData($new);
-        $this->convertTerrain($new);
+		$this->populateLevelData($new);
+		$this->convertTerrain($new);
 
-        $path = $this->oldProvider->getPath();
-        $this->oldProvider->close();
-        $new->close();
+		$path = $this->oldProvider->getPath();
+		$this->oldProvider->close();
+		$new->close();
 
-        $this->output->writeln("Backing up pre-conversion world to " . $this->backupPath);
-        rename($path, $this->backupPath);
-        rename($new->getPath(), $path);
+		$this->output->writeln("Backing up pre-conversion world to " . $this->backupPath);
+		rename($path, $this->backupPath);
+		rename($new->getPath(), $path);
 
-        $this->output->writeln("Conversion completed");
+		$this->output->writeln("Conversion completed");
 
-        /**
-         * @see WritableWorldProvider::__construct()
-         */
-        return new $this->newProvider($path);
-    }
+		/**
+		 * @see WritableWorldProvider::__construct()
+		 */
+		return new $this->newProvider($path);
+	}
 
-    private function generateNew() : LevelProvider{
-        $this->output->writeln("Generating new world");
+	private function generateNew() : LevelProvider{
+		$this->output->writeln("Generating new world");
 
-        $convertedOutput = rtrim($this->oldProvider->getPath(), "/\\") . "_converted" . DIRECTORY_SEPARATOR;
-        if(file_exists($convertedOutput)){
-            $this->output->writeln("Found previous conversion attempt, deleting...");
-            Filesystem::recursiveUnlink($convertedOutput);
-        }
-        $this->newProvider::generate($convertedOutput, $this->oldProvider->getName(), $this->oldProvider->getSeed(), GeneratorManager::getGenerator($this->oldProvider->getGenerator()), $this->oldProvider->getGeneratorOptions());
+		$convertedOutput = rtrim($this->oldProvider->getPath(), "/\\") . "_converted" . DIRECTORY_SEPARATOR;
+		if(file_exists($convertedOutput)){
+			$this->output->writeln("Found previous conversion attempt, deleting...");
+			Filesystem::recursiveUnlink($convertedOutput);
+		}
+		$this->newProvider::generate($convertedOutput, $this->oldProvider->getName(), $this->oldProvider->getSeed(), GeneratorManager::getGenerator($this->oldProvider->getGenerator()), $this->oldProvider->getGeneratorOptions());
 
-        /**
-         * @see WritableWorldProvider::__construct()
-         */
-        return new $this->newProvider($convertedOutput);
-    }
+		/**
+		 * @see WritableWorldProvider::__construct()
+		 */
+		return new $this->newProvider($convertedOutput);
+	}
 
-    private function populateLevelData(LevelProvider $data) : void{
-        $this->output->writeln("Converting world manifest");
-        $data->setDifficulty($this->oldProvider->getDifficulty());
-        $data->setSpawn($this->oldProvider->getSpawn());
-        $data->setTime($this->oldProvider->getTime());
+	private function populateLevelData(LevelProvider $data) : void{
+		$this->output->writeln("Converting world manifest");
+		$data->setDifficulty($this->oldProvider->getDifficulty());
+		$data->setSpawn($this->oldProvider->getSpawn());
+		$data->setTime($this->oldProvider->getTime());
 
-        if($this->oldProvider instanceof BaseLevelProvider){
-            $this->oldProvider->saveLevelData();
-        }
-        $this->output->writeln("Finished converting manifest");
-        //TODO: add more properties as-needed
-    }
+		if($this->oldProvider instanceof BaseLevelProvider){
+			$this->oldProvider->saveLevelData();
+		}
+		$this->output->writeln("Finished converting manifest");
+		//TODO: add more properties as-needed
+	}
 
-    private function convertTerrain(LevelProvider $new) : void{
-        $this->output->writeln("Calculating chunk count");
-        $count = RegionProviderUtils::calculateChunkCount($this->oldProvider);
-        $this->output->writeln("Discovered $count chunks");
+	private function convertTerrain(LevelProvider $new) : void{
+		$this->output->writeln("Calculating chunk count");
+		$count = RegionProviderUtils::calculateChunkCount($this->oldProvider);
+		$this->output->writeln("Discovered $count chunks");
 
-        $counter = 0;
+		$counter = 0;
 
-        $start = microtime(true);
-        $thisRound = $start;
-        static $reportInterval = 256;
-        foreach(RegionProviderUtils::getAllChunks($this->oldProvider, true, $this->output) as $chunk){
-            $chunk->setChanged();
-            $new->saveChunk($chunk);
-            $counter++;
-            if(($counter % $reportInterval) === 0){
-                $time = microtime(true);
-                $diff = $time - $thisRound;
-                $thisRound = $time;
-                $this->output->writeln("Converted $counter / $count chunks (" . floor($reportInterval / $diff) . " chunks/sec)");
-            }
-        }
-        $total = microtime(true) - $start;
-        $this->output->writeln("Converted $counter / $counter chunks in " . round($total, 3) . " seconds (" . floor($counter / $total) . " chunks/sec)");
-    }
+		$start = microtime(true);
+		$thisRound = $start;
+		static $reportInterval = 256;
+		foreach(RegionProviderUtils::getAllChunks($this->oldProvider, true, $this->output) as $chunk){
+			$chunk->setChanged();
+			$new->saveChunk($chunk);
+			$counter++;
+			if(($counter % $reportInterval) === 0){
+				$time = microtime(true);
+				$diff = $time - $thisRound;
+				$thisRound = $time;
+				$this->output->writeln("Converted $counter / $count chunks (" . floor($reportInterval / $diff) . " chunks/sec)");
+			}
+		}
+		$total = microtime(true) - $start;
+		$this->output->writeln("Converted $counter / $counter chunks in " . round($total, 3) . " seconds (" . floor($counter / $total) . " chunks/sec)");
+	}
 
 }

@@ -42,30 +42,30 @@ use pocketmine\level\format\io\region\McRegion;
 
 class McRegionToAnvilCommand extends Command{
 
-    /**
-     * The signature of the command.
-     *
-     * @var string
-     */
-    protected $signature = 'mcregion:anvil
+	/**
+	 * The signature of the command.
+	 *
+	 * @var string
+	 */
+	protected $signature = 'mcregion:anvil
                             {directory : The directory where the McRegion world is located.}
                             {backup : The path where the world should be backed up to before conversion begins.}';
 
-    /**
-     * The description of the command.
-     *
-     * @var string
-     */
-    protected $description = 'Convert an McRegion world to Anvil world format.';
+	/**
+	 * The description of the command.
+	 *
+	 * @var string
+	 */
+	protected $description = 'Convert an McRegion world to Anvil world format.';
 
-    /**
-     * Execute the console command.
-     *
-     * @return mixed
-     */
-    public function handle(){
-        $converter = new FormatConverter(new McRegion($this->argument('directory') . '/'), Anvil::class, $this->argument('backup'), $this->output);
-        $converter->execute();
-    }
+	/**
+	 * Execute the console command.
+	 *
+	 * @return mixed
+	 */
+	public function handle(){
+		$converter = new FormatConverter(new McRegion($this->argument('directory') . '/'), Anvil::class, $this->argument('backup'), $this->output);
+		$converter->execute();
+	}
 
 }

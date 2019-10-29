@@ -44,74 +44,74 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 final class RegionProviderUtils extends McRegion{
 
-    public function __construct(string $path){
-        // NOOP
-    }
+	public function __construct(string $path){
+		// NOOP
+	}
 
-    public static function createRegionIterator(BaseLevelProvider $provider) : \RegexIterator{
-        return new \RegexIterator(
-            new \FilesystemIterator(
-                $provider->getPath() . '/region/',
-                \FilesystemIterator::CURRENT_AS_PATHNAME | \FilesystemIterator::SKIP_DOTS | \FilesystemIterator::UNIX_PATHS
-            ),
-            '/\/r\.(-?\d+)\.(-?\d+)\.' . $provider::REGION_FILE_EXTENSION . '$/',
-            \RegexIterator::GET_MATCH
-        );
-    }
+	/**
+	 * @param BaseLevelProvider    $provider
+	 * @param bool                 $skipCorrupted
+	 * @param OutputInterface|null $output
+	 *
+	 * @return \Generator|Chunk[]
+	 */
+	public static function getAllChunks(BaseLevelProvider $provider, bool $skipCorrupted = false, ?OutputInterface $output = null) : \Generator{
+		$iterator = self::createRegionIterator($provider);
+		foreach($iterator as $region){
+			$regionX = ((int) $region[1]);
+			$regionZ = ((int) $region[2]);
+			$rX = $regionX << 5;
+			$rZ = $regionZ << 5;
+			for($chunkX = $rX; $chunkX < $rX + 32; ++$chunkX){
+				for($chunkZ = $rZ; $chunkZ < $rZ + 32; ++$chunkZ){
+					try{
+						$chunk = $provider->loadChunk($chunkX, $chunkZ);
+						if($chunk !== null){
+							yield $chunk;
+						}
+					}catch(CorruptedChunkException $e){
+						if(!$skipCorrupted){
+							throw $e;
+						}
+						if($output !== null){
+							$output->writeln("Skipped corrupted chunk $chunkX $chunkZ (" . $e->getMessage() . ")");
+						}
+					}
+				}
+			}
+			self::unloadRegion($provider, $regionX, $regionZ);
+		}
+	}
 
-    /**
-     * @param BaseLevelProvider    $provider
-     * @param bool                 $skipCorrupted
-     * @param OutputInterface|null $output
-     *
-     * @return \Generator|Chunk[]
-     */
-    public static function getAllChunks(BaseLevelProvider $provider, bool $skipCorrupted = false, ?OutputInterface $output = null) : \Generator{
-        $iterator = self::createRegionIterator($provider);
-        foreach($iterator as $region){
-            $regionX = ((int) $region[1]);
-            $regionZ = ((int) $region[2]);
-            $rX = $regionX << 5;
-            $rZ = $regionZ << 5;
-            for($chunkX = $rX; $chunkX < $rX + 32; ++$chunkX){
-                for($chunkZ = $rZ; $chunkZ < $rZ + 32; ++$chunkZ){
-                    try{
-                        $chunk = $provider->loadChunk($chunkX, $chunkZ);
-                        if($chunk !== null){
-                            yield $chunk;
-                        }
-                    }catch(CorruptedChunkException $e){
-                        if(!$skipCorrupted){
-                            throw $e;
-                        }
-                        if($output !== null){
-                            $output->writeln("Skipped corrupted chunk $chunkX $chunkZ (" . $e->getMessage() . ")");
-                        }
-                    }
-                }
-            }
-            self::unloadRegion($provider, $regionX, $regionZ);
-        }
-    }
+	public static function createRegionIterator(BaseLevelProvider $provider) : \RegexIterator{
+		return new \RegexIterator(
+			new \FilesystemIterator(
+				$provider->getPath() . '/region/',
+				\FilesystemIterator::CURRENT_AS_PATHNAME | \FilesystemIterator::SKIP_DOTS | \FilesystemIterator::UNIX_PATHS
+			),
+			'/\/r\.(-?\d+)\.(-?\d+)\.' . $provider::REGION_FILE_EXTENSION . '$/',
+			\RegexIterator::GET_MATCH
+		);
+	}
 
-    public static function calculateChunkCount(BaseLevelProvider $provider) : int{
-        $count = 0;
-        foreach(self::createRegionIterator($provider) as $region){
-            $regionX = ((int) $region[1]);
-            $regionZ = ((int) $region[2]);
-            $provider->loadRegion($regionX, $regionZ);
-            $count += RegionLoaderUtils::calculateChunkCount($provider->getRegion($regionX, $regionZ));
-            self::unloadRegion($provider, $regionX, $regionZ);
-        }
+	protected static function unloadRegion(BaseLevelProvider $provider, int $regionX, int $regionZ) : void{
+		if(isset($provider->regions[$hash = Level::chunkHash($regionX, $regionZ)])){
+			$provider->regions[$hash]->close();
+			unset($provider->regions[$hash]);
+		}
+	}
 
-        return $count;
-    }
+	public static function calculateChunkCount(BaseLevelProvider $provider) : int{
+		$count = 0;
+		foreach(self::createRegionIterator($provider) as $region){
+			$regionX = ((int) $region[1]);
+			$regionZ = ((int) $region[2]);
+			$provider->loadRegion($regionX, $regionZ);
+			$count += RegionLoaderUtils::calculateChunkCount($provider->getRegion($regionX, $regionZ));
+			self::unloadRegion($provider, $regionX, $regionZ);
+		}
 
-    protected static function unloadRegion(BaseLevelProvider $provider, int $regionX, int $regionZ) : void{
-        if(isset($provider->regions[$hash = Level::chunkHash($regionX, $regionZ)])){
-            $provider->regions[$hash]->close();
-            unset($provider->regions[$hash]);
-        }
-    }
+		return $count;
+	}
 
 }
