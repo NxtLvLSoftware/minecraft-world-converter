@@ -1,0 +1,75 @@
+{
+	"name": "nxtlvlsoftware/mcregion2anvil",
+	"description": "An mcregion to anvil minecraft world format converter.",
+	"type": "project",
+	"license": "Unlicense",
+	"authors": [
+		{
+			"name": "Jack Noordhuis",
+			"email": "daswaggamer@gmail.com"
+		}
+	],
+	"require": {
+		"php": "^7.2",
+		"laravel-zero/framework": "^6.0",
+		"pocketmine/pocketmine-mp": "3.9.6"
+	},
+	"require-dev": {
+		"roave/security-advisories": "dev-master"
+	},
+	"autoload": {
+		"psr-4": {
+			"App\\": "app/"
+		}
+	},
+	"repositories": [
+		{
+			"type": "vcs",
+			"name": "pocketmine/pocketmine-mp",
+			"url": "https://github.com/pmmp/PocketMine-MP"
+		},
+		{
+			"type": "vcs",
+			"url": "https://github.com/pmmp/RakLib"
+		},
+		{
+			"type": "vcs",
+			"url": "https://github.com/pmmp/SPL"
+		},
+		{
+			"type": "vcs",
+			"url": "https://github.com/pmmp/BinaryUtils"
+		},
+		{
+			"type": "vcs",
+			"url": "https://github.com/pmmp/NBT"
+		},
+		{
+			"type": "vcs",
+			"url": "https://github.com/pmmp/Math"
+		},
+		{
+			"type": "vcs",
+			"url": "https://github.com/pmmp/Snooze"
+		},
+		{
+			"type": "vcs",
+			"url": "https://github.com/pmmp/Log"
+		}
+	],
+	"config": {
+		"preferred-install": "dist",
+		"sort-packages": true,
+		"optimize-autoloader": true
+	},
+	"scripts": {
+		"post-create-project-cmd": [
+			"@php application app:rename"
+		]
+	},
+	"minimum-stability": "dev",
+	"prefer-stable": true,
+	"bin": [
+		"convert"
+	]
+}
